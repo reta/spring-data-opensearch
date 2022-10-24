@@ -10,7 +10,7 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.0.0-unified-release-notes-SNAPSHOT</version>
 	</parent>
 
 	<name>Spring Data Opensearch</name>
