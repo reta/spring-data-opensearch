@@ -18,7 +18,7 @@ dependencyResolutionManagement {
     }
     
     create("opensearchLibs") {
-      library("client", "org.opensearch.client:opensearch-rest-high-level-client:2.3.0")
+      library("client", "org.opensearch.client:opensearch-rest-high-level-client:2.4.0")
       library("testcontainers", "org.opensearch:opensearch-testcontainers:2.0.0") 
     }
   }
