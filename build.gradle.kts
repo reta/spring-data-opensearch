@@ -77,7 +77,7 @@ dependencies {
   testImplementation("org.apache.xbean:xbean-asm5-shaded:4.5")
   testImplementation("io.specto:hoverfly-java-junit5:0.14.3")
   testImplementation("org.skyscreamer:jsonassert:1.5.1")
-  testImplementation("org.mockito:mockito-junit-jupiter:4.8.1")
+  testImplementation("org.mockito:mockito-junit-jupiter:4.10.0")
   testImplementation("jakarta.annotation:jakarta.annotation-api:2.1.1")
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
   testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
