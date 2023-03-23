@@ -33,7 +33,7 @@ dependencies {
   implementation(springLibs.tx)
   compileOnly(springLibs.web)
 
-  testImplementation("jakarta.enterprise:jakarta.enterprise.cdi-api:3.0.0")
+  testImplementation("jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1")
   testImplementation("org.slf4j:log4j-over-slf4j:2.0.7")
   testImplementation("org.apache.logging.log4j:log4j-core:2.20.0")
   testImplementation("org.apache.logging.log4j:log4j-to-slf4j:2.20.0")
