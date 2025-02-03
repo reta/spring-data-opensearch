@@ -28,6 +28,7 @@ dependencies {
   }
   compileOnly(opensearchLibs.java.client)
   compileOnly(jakarta.json.bind)
+  implementation(springLibs.boot.data.elasticsearch)
   testImplementation(springLibs.test) {
     exclude("ch.qos.logback", "logback-classic")
   }

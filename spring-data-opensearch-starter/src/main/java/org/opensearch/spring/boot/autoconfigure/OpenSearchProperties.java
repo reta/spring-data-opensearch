@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchProperties.Restclient;
+import org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchProperties.Restclient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
