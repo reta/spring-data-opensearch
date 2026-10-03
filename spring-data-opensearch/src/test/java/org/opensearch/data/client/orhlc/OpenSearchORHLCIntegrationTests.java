@@ -24,8 +24,10 @@ import org.junit.jupiter.api.Test;
 import org.opensearch.action.support.ActiveShardCount;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.action.update.UpdateRequest;
+import org.opensearch.common.geo.GeoDistance;
 import org.opensearch.common.lucene.search.function.CombineFunction;
 import org.opensearch.common.lucene.search.function.FunctionScoreQuery;
+import org.opensearch.common.unit.DistanceUnit;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.data.client.EnabledIfOpenSearchVersion;
 import org.opensearch.data.client.junit.jupiter.OpenSearchRestTemplateConfiguration;
@@ -76,6 +78,11 @@ public class OpenSearchORHLCIntegrationTests extends ElasticsearchIntegrationTes
     @Override
     protected Query getTermQuery(String field, String value) {
         return new NativeSearchQueryBuilder().withQuery(termQuery(field, value)).build();
+    }
+    
+    @Override
+    protected Query getAnyQuery(String field, Float value, Float... values) {
+        return new NativeSearchQueryBuilder().withQuery(QueryBuilders.geoBoundingBoxQuery(field).setCorners(value, value, 0, 0)).build();
     }
 
     @Override
