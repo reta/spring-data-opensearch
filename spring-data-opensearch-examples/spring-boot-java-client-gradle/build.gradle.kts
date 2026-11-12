@@ -8,7 +8,7 @@ plugins {
   alias(pluginLibs.plugins.spotless)
   alias(pluginLibs.plugins.editorconfig)
   id("java-conventions")
-  id("org.graalvm.buildtools.native") version "1.1.17"
+  id("org.graalvm.buildtools.native") version "1.1.18"
 }
 
 buildscript {
@@ -62,7 +62,7 @@ spotless {
     target("src/main/java/**/*.java", "src/test/java/org/opensearch/**/*.java")
 
     trimTrailingWhitespace()
-    indentWithSpaces()
+    leadingTabsToSpaces()
     endWithNewline()
 
     removeUnusedImports()
