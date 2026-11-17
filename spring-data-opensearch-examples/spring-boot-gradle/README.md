@@ -7,7 +7,7 @@ This example uses the [`RestHighLevelClient`](https://opensearch.org/docs/latest
 ## Pre-requisites
 
 * [Docker](https://www.docker.com/)
-* Java 17
+* Java 21
 
 ## Using Docker CLI
 

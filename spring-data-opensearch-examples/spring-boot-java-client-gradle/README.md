@@ -7,7 +7,7 @@ This example uses the [`opensearch-java` client](https://opensearch.org/docs/lat
 ## Pre-requisites
 
 * [Docker](https://www.docker.com/)
-* Java 17
+* Java 21
 
 ## Using Docker CLI
 
