@@ -16,6 +16,70 @@ Includes integrated object mapping between documents and POJOs.
 * Automatic implementation of `Repository` interfaces including support for custom search methods.
 * CDI support for repositories
 
+## Observations for OpenSearch operations
+
+An observation records an operation for metrics and tracing.
+The OSC `OpenSearchTemplate` and `ReactiveOpenSearchTemplate` use the observation name `spring.data.opensearch.command`.
+They discover an `ObservationRegistry` bean from the application context.
+Spring Boot applications can use the registry configured by Actuator.
+Without a registry, the templates use `ObservationRegistry.NOOP` and do not record observations.
+For templates that you construct directly, call `setObservationRegistry(registry)`.
+
+The default convention includes `spring.data.operation` in metrics and traces.
+It includes `spring.data.collection` and `spring.data.batch.size` only in traces.
+These high-cardinality values can vary without creating a metric series for each index or batch size.
+The contextual name includes the operation and its index, when available.
+
+The templates observe these supported operations:
+
+* Document saves, indexing, reads, multi-get, existence checks, deletes, updates, counts, and bulk operations.
+* Searches, multi-search, and response-based reactive searches, including `searchForPage`, `searchForHits`, and aggregations.
+* Scroll requests, point-in-time operations, reindex requests, and stored scripts.
+* Index creation, deletion, existence checks, mappings, settings reads, aliases, and index or component templates.
+* Cluster health and version requests.
+
+Imperative `searchForStream` records each scroll request, not the lifetime of the iterator.
+Reactive observations start for each subscription and stop on completion, error, or cancellation.
+They use the caller observation from the Reactor context as their parent.
+Reactive bulk saves preserve streaming and record the batch size.
+For `submitReindex`, the observation measures submission, not completion of the background task.
+Reindex observations include the source index names only in traces.
+Index and cluster templates inherit the parent configuration.
+Index and cluster templates that you construct directly do not record observations.
+Copies made with `withRouting` or `withRefreshPolicy` retain it.
+
+To customize names or tags, register an `OpenSearchObservationConvention` bean.
+For direct construction, call `setObservationConvention(convention)`.
+For example, this convention adds a bounded application-specific metric tag:
+
+```java
+@Bean
+OpenSearchObservationConvention openSearchObservationConvention() {
+    return new DefaultOpenSearchObservationConvention() {
+        @Override
+        public KeyValues getLowCardinalityKeyValues(final OpenSearchObservationContext context) {
+            return super.getLowCardinalityKeyValues(context).and("application.component", "catalog");
+        }
+    };
+}
+```
+
+The example uses types from `org.opensearch.data.client.osc` and `io.micrometer.common.KeyValues`.
+Do not add index names to metric tags unless the number of distinct names stays small.
+Unbounded tag values can exhaust the capacity of a metrics backend.
+
+This support requires no snapshot dependency.
+With Spring Data Elasticsearch 6.1.2, the inherited reactive `exists(String, Class<?>)` overload bypasses the observation.
+Use `exists(String, IndexCoordinates)` to record that operation.
+Reactive repository `existsById` already uses that overload.
+The class-based overload will inherit the upstream fix after a dependency update.
+This project does not add a local workaround.
+
+Legacy ORHLC templates and native `opensearch-java` transport instrumentation are outside this support.
+SQL search and reactive `updateByQuery` remain unsupported.
+Local mapping and settings generation do not send requests and do not create observations.
+Raw `execute` callbacks do not create template observations.
+
 ## About OpenSearch versions and clients
 
 The Spring Data OpenSearch follows the release model of the Spring Data Elasticsearch / Spring Boot projects.
@@ -51,7 +115,7 @@ By default, the `RestHighLevelCLient` is configured as the means to communicate 
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 </dependency>
 ```
 
@@ -61,7 +125,7 @@ To use Spring Boot 3.x auto configuration support:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch-starter</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 </dependency>
 ```
 
@@ -71,7 +135,7 @@ To use Spring Boot 3.x auto configuration support for testing:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch-test-autoconfigure</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 	<scope>test</scope>
 </dependency>
 ```
@@ -84,7 +148,7 @@ To switch over to `OpenSearchClient`, the `opensearch-rest-high-level-client` de
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 	<exclusions>
 		<exclusion>
 			<groupId>org.opensearch.client</groupId>
@@ -96,7 +160,7 @@ To switch over to `OpenSearchClient`, the `opensearch-rest-high-level-client` de
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>opensearch-java</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 </dependency>
 ```
 
@@ -106,7 +170,7 @@ To use Spring Boot 3.x auto configuration support:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch-starter</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 	<exclusions>
 		<exclusion>
 			<groupId>org.opensearch.client</groupId>
@@ -118,7 +182,7 @@ To use Spring Boot 3.x auto configuration support:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>opensearch-java</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 </dependency>
 ```
 
@@ -128,7 +192,7 @@ To use Spring Boot 3.x auto configuration support for testing:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>spring-data-opensearch-test-autoconfigure</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 	<scope>test</scope>
 	<exclusions>
 		<exclusion>
@@ -141,9 +205,65 @@ To use Spring Boot 3.x auto configuration support for testing:
 <dependency>
 	<groupId>org.opensearch.client</groupId>
 	<artifactId>opensearch-java</artifactId>
-	<version>3.1.4</version>
+	<version>3.1.5</version>
 </dependency>
 ```
+
+### Bulk ingester
+
+The bulk ingester collects individual index, create, update, and delete operations and sends them in bulk requests.
+It requires the OpenSearch Java client (`osc.OpenSearchTemplate`).
+The legacy REST high-level client does not support this API.
+
+The caller must provide a `BulkIngesterListener` to receive results and request failures.
+Each operation can carry a context, such as a source record ID, that the listener receives with its result.
+
+```java
+import java.time.Duration;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.bulk.BulkIngesterListener;
+import org.springframework.data.elasticsearch.core.bulk.BulkIngesterOptions;
+import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
+
+void ingestPersons(final ElasticsearchOperations operations, final Iterable<Person> persons,
+        final BulkIngesterListener<String> listener) {
+    final var options = BulkIngesterOptions.builder()
+            .withMaxOperations(500)
+            .withFlushInterval(Duration.ofSeconds(5))
+            .build();
+
+    try (final var ingester = operations.bulkIngester(options, Person.class, listener)) {
+        for (final var person : persons) {
+            ingester.add(new IndexQueryBuilder().withObject(person).build(), person.getId());
+        }
+        ingester.addDelete("obsolete-id", null, "delete obsolete-id");
+    }
+}
+```
+
+Closing the ingester sends remaining operations and waits for requests and listeners.
+It does not close the client.
+Entity mapping, auditing, and before-convert callbacks run when an index operation is added.
+Successful index and create operations update entity IDs, versions, sequence numbers, and primary terms, then run after-save callbacks.
+Failed operations do not update entities or run after-save callbacks.
+
+The ingester applies the template refresh policy and the request configuration in `BulkIngesterOptions.getBulkOptions()` to every request.
+Only the limits in `BulkIngesterOptions` control batches.
+Limits in the nested `BulkOptions` and template default `BulkOptions` do not apply.
+A request can exceed `maxSize` by one operation because the client sends it after that operation reaches the limit.
+
+Adding operations or flushing can block when the maximum number of requests is already in progress.
+Do not use the ingester on reactive threads.
+Listeners must be thread-safe because requests can complete concurrently.
+Do not call `add`, `addDelete`, `flush`, or `close` from a listener or an after-save callback.
+The ingester rejects these calls to prevent a deadlock.
+Item failures appear in the results, and request failures reach the listener as translated exceptions.
+The ingester does not retry failed operations.
+
+With an observation registry, the ingester records one `bulk` observation per request, including the index name and batch size.
+The observation stops after the listener completes.
+Request failures record the translated exception.
+Item failures remain in the results and do not mark the request observation as failed.
 
 ## Getting Started
 
@@ -338,7 +458,7 @@ See https://docs.spring.io/spring-boot/reference/testing/testcontainers.html#tes
 ```java
 @Container
 @ServiceConnection
-static final OpenSearchContainer<?> container = new OpenSearchContainer<>("opensearchproject/opensearch:3.1.4");
+static final OpenSearchContainer<?> container = new OpenSearchContainer<>("opensearchproject/opensearch:3.1.5");
 ```
 
 So, the client will take values from the `OpenSearchContainer` configuration.
@@ -357,7 +477,7 @@ Add the Apache Maven dependency:
 <dependency>
   <groupId>org.opensearch.client</groupId>
   <artifactId>spring-data-opensearch</artifactId>
-  <version>3.1.4</version>
+  <version>3.1.5</version>
 </dependency>
 ```
 
@@ -527,4 +647,3 @@ Copyright OpenSearch Contributors. See [NOTICE](NOTICE.txt) for details.
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
